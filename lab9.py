@@ -1,81 +1,33 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from sklearn.preprocessing import LabelEncoder
-from sklearn.tree import DecisionTreeClassifier, plot_tree
-from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import classification_report, confusion_matrix
 
-# Load Dataset
+# Load dataset
 dataset = pd.read_csv("dataset.csv")
 
-print("Original Data Types:")
-print(dataset.dtypes)
-
-# Encode all non-numeric columns
+# Encode categorical columns
 for col in dataset.columns:
     if not pd.api.types.is_numeric_dtype(dataset[col]):
-        le = LabelEncoder()
-        dataset[col] = le.fit_transform(dataset[col].astype(str))
+        dataset[col] = LabelEncoder().fit_transform(dataset[col].astype(str))
 
-print("\nData Types After Encoding:")
-print(dataset.dtypes)
-
-# Features and Target
+# Features and target
 X = dataset.drop("class", axis=1)
 y = dataset["class"]
-
-print("\nChecking X data types:")
-print(X.dtypes)
 
 # Decision Tree
 model = DecisionTreeClassifier(random_state=42)
 
-accuracy_scores = cross_val_score(
-    model,
-    X,
-    y,
-    cv=5
-)
+# Cross-validation predictions (10-fold like WEKA default)
+y_pred = cross_val_predict(model, X, y, cv=10)
 
-print("\nAccuracy Scores:")
-print(accuracy_scores)
+# Classification Report
+print("\n=== Detailed Accuracy By Class ===")
+print(classification_report(y, y_pred, target_names=["bad", "good"]))
 
-print("\nAverage Accuracy:")
-print(accuracy_scores.mean())
+# Confusion Matrix
+cm = confusion_matrix(y, y_pred)
 
-# Pruned Tree
-pruned_model = DecisionTreeClassifier(
-    ccp_alpha=0.01,
-    random_state=42
-)
-
-accuracy_scores_pruned = cross_val_score(
-    pruned_model,
-    X,
-    y,
-    cv=5
-)
-
-print("\nPruned Accuracy Scores:")
-print(accuracy_scores_pruned)
-
-print("\nAverage Pruned Accuracy:")
-print(accuracy_scores_pruned.mean())
-
-# Train final model
-model.fit(X, y)
-
-# Plot Tree
-plt.figure(figsize=(25, 12))
-
-plot_tree(
-    model,
-    feature_names=X.columns,
-    class_names=["bad", "good"],
-    filled=True,
-    rounded=True,
-    fontsize=8
-)
-
-plt.title("Decision Tree - German Credit Dataset")
-plt.show()
+print("\n=== Confusion Matrix ===")
+print(cm)
