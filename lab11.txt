@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Load dataset
+credit_data = pd.read_csv('credit_dataset.csv')
+
+numeric_features = ['age', 'income', 'credit_score']
+categorical_features = ['education', 'marital_status']
+
+# One-Hot Encoding
+X = pd.get_dummies(
+    credit_data[numeric_features + categorical_features],
+    drop_first=True
+)
+
+# Standardization
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# K-Means
+k = 3
+kmeans = KMeans(
+    n_clusters=k,
+    random_state=42,
+    n_init=10
+)
+
+kmeans.fit(X_scaled)
+
+# Cluster labels
+credit_data['Cluster'] = kmeans.labels_
+
+# Cluster sizes
+print("Cluster Counts:")
+print(credit_data['Cluster'].value_counts())
+
+# Cluster centers
+print("\nCluster Centers:")
+print(pd.DataFrame(
+    scaler.inverse_transform(kmeans.cluster_centers_),
+    columns=X.columns
+))
